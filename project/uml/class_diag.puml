@@ -1,0 +1,46 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+abstract class Moteur {
+  {abstract} +commander(**kwargs)
+  {abstract} +mettre_a_jour(robot, dt)
+}
+
+class MoteurDifferentiel {
+  -v: float
+  -omega: float
+  +commander(**kwargs)
+  +mettre_a_jour(robot, dt)
+}
+
+class MoteurOmnidirectionnel {
+  -vx: float
+  -vy: float
+  -omega: float
+  +commander(**kwargs)
+  +mettre_a_jour(robot, dt)
+}
+
+class RobotMobile {
+  -__x: float
+  -__y: float
+  -__orientation: float
+  +moteur: Moteur
+  {static} -_nb_robots: int
+  +x: float
+  +y: float
+  +orientation: float
+  +avancer(distance)
+  +tourner(angle)
+  +commander(**kwargs)
+  +mettre_a_jour(dt)
+  {static} +moteur_valide(moteur): bool
+  {static} +nombre_robots(): int
+  +__str__(): str
+}
+
+Moteur <|-- MoteurDifferentiel
+Moteur <|-- MoteurOmnidirectionnel
+
+RobotMobile o-- Moteur : moteur
+@enduml
