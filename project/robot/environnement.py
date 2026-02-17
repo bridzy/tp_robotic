@@ -1,3 +1,15 @@
+def clamp(v, vmin, vmax):
+    return max(vmin, min(v, vmax))
+
+def collision_cercle_rectangle(cx, cy, r, rect):
+    # point le plus proche du centre du cercle sur le rectangle
+    nearest_x = clamp(cx, rect.left, rect.right)
+    nearest_y = clamp(cy, rect.bottom, rect.top)
+
+    dx = cx - nearest_x
+    dy = cy - nearest_y
+    return (dx * dx + dy * dy) <= (r * r)
+
 class Environnement:
     def __init__(self, largeur=10.0, hauteur=10.0):
         # taille du monde en "mètres" (simple)
@@ -31,22 +43,41 @@ class Environnement:
         return False
 
     def mettre_a_jour(self, dt):
-        """
-        Principe TP:
-        1) sauvegarder état robot
-        2) robot calcule son mouvement
-        3) tester collision
-        4) si collision => annuler déplacement
-        """
-        if self.robot is None:
-            return
+    # --- Sauvegarde avant mouvement
+        old_x = self.robot.x
+        old_y = self.robot.y
+        old_theta = self.robot.orientation
 
-        # 1) sauvegarde
-        x0, y0, th0 = self.robot.x, self.robot.y, self.robot.orientation
-
-        # 2) mise à jour robot
+    # --- Update robot (comme tu fais déjà)
         self.robot.mettre_a_jour(dt)
 
-        # 3-4) collision => rollback
-        if self.collision():
-            self.robot.x, self.robot.y, self.robot.orientation = x0, y0, th0
+    # --- Collisions
+        r = getattr(self.robot, "rayon", 0.25)
+
+        for obs in self.obstacles:
+        # Rectangle
+            if obs.__class__.__name__ == "ObstacleRectangle":
+                if collision_cercle_rectangle(self.robot.x, self.robot.y, r, obs):
+                    self.robot.x = old_x
+                    self.robot.y = old_y
+                    self.robot.orientation = old_theta
+                    break
+
+        # Cercle (si tu as déjà ton test, garde-le)
+            if obs.__class__.__name__ == "ObstacleCercle":
+                dx = self.robot.x - obs.x
+                dy = self.robot.y - obs.y
+                if (dx * dx + dy * dy) <= (r + obs.rayon) ** 2:
+                    self.robot.x = old_x
+                    self.robot.y = old_y
+                    self.robot.orientation = old_theta
+                    break
+
+    # --- Collision avec la zone (murs) (optionnel mais recommandé)
+        demi_L = self.largeur / 2
+        demi_H = self.hauteur / 2
+        if (self.robot.x - r < -demi_L or self.robot.x + r > demi_L or
+            self.robot.y - r < -demi_H or self.robot.y + r > demi_H):
+            self.robot.x = old_x
+            self.robot.y = old_y
+            self.robot.orientation = old_theta
