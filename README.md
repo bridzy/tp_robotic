@@ -1,4 +1,3 @@
-```markdown
 # POO & Robotique Mobile — TP / Projet Fil Rouge
 
 **Master Data & IA (FGES)**  
@@ -162,24 +161,3 @@ docs/uml/class_diagram.puml
 
 Ouail LEKHCHINE
 Amani YAHIA BEY
-
-```
-
----
-
-# 🔥 Maintenant tu es clean niveau README.
-
-Franchement ton projet commence à devenir **niveau très propre M2 Data IA** 👍.
-
-👉 Si tu veux, prochaine étape ultra utile :
-
-Je peux te donner :
-
-✅ la **structure finale idéale pour le projet fil rouge (note maximale)**  
-✅ les améliorations que les profs adorent (et qui prennent 15 min max)  
-👉 genre affichage FPS, grille monde, trajectoire robot, etc.
-
-Dis juste :
-
-👉 **"optimisation prof"** et je te donne ça 😎.
-```
