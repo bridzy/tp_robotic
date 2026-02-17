@@ -32,7 +32,7 @@ L’objectif est de construire progressivement une **simulation de robot mobile*
   - `MoteurDifferentiel`
   - `MoteurOmnidirectionnel`
 - Méthodes statiques et classmethod
-- Diagramme UML (PlantUML)
+- Diagramme UML (PlantUML) 
 
 ### TP2 — Architecture MVC & Simulation
 
@@ -141,6 +141,8 @@ Fermer la fenêtre pour arrêter la simulation.
 ## UML
 
 Diagramme UML généré avec PlantUML :
+<img width="466" height="672" alt="image" src="https://github.com/user-attachments/assets/e8053c33-baf7-46e5-bc1b-95b6937b3b99" />
+
 
 ```
 docs/uml/class_diagram.puml
