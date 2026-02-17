@@ -24,7 +24,7 @@ class MoteurDifferentiel(Moteur):
     def mettre_a_jour(self, robot, dt):
         dt = float(dt)
         theta_k = robot.orientation
-        robot.orientation = robot.orientation + self.omega * dt
+        robot.orientation = (robot.orientation + self.omega * dt) % (2 * math.pi)
         robot.x = robot.x + self.v * math.cos(theta_k) * dt
         robot.y = robot.y + self.v * math.sin(theta_k) * dt
 
@@ -45,7 +45,7 @@ class MoteurOmnidirectionnel(Moteur):
         dt = float(dt)
         theta_k = robot.orientation
 
-        robot.orientation = robot.orientation + self.omega * dt
+        robot.orientation = (robot.orientation + self.omega * dt) % (2 * math.pi)
 
         robot.x = robot.x + (self.vx * math.cos(theta_k) - self.vy * math.sin(theta_k)) * dt
         robot.y = robot.y + (self.vx * math.sin(theta_k) + self.vy * math.cos(theta_k)) * dt
