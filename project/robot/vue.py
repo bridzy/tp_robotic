@@ -6,7 +6,6 @@ class VueTerminalRobot:
     def dessiner_robot(self, robot):
         # Affichage simple de l'état du robot
         print(f"Robot -> x={robot.x:.2f}, y={robot.y:.2f}, orientation={robot.orientation:.2f}")
-        
 
 
 class VuePygame:
@@ -25,21 +24,38 @@ class VuePygame:
         py = int(self.hauteur / 2 - (y * self.scale))
         return px, py
 
+    def dessiner_environnement(self, env):
+        # 1) fond
+        self.screen.fill((255, 255, 255))
+
+        # 2) obstacles
+        for obs in getattr(env, "obstacles", []):
+            obs.dessiner(self)
+
+        # 3) robot
+        if getattr(env, "robot", None) is not None:
+            self.dessiner_robot(env.robot)
+
+        # 4) afficher une seule fois par frame
+        pygame.display.flip()
+
     def dessiner_robot(self, robot):
-        self.screen.fill((255, 255, 255))  # fond blanc
-
+        # IMPORTANT: ne pas faire screen.fill() ici (sinon ça efface les obstacles)
         x, y = self.convertir_coordonnees(robot.x, robot.y)
-        r = 12  # rayon en pixels
 
-        # robot = cercle
+        # rayon robot: si robot.rayon existe => conversion mètres->pixels, sinon valeur par défaut
+        if hasattr(robot, "rayon"):
+            r = max(3, int(robot.rayon * self.scale))
+        else:
+            r = 12
+
+        # robot = cercle bleu
         pygame.draw.circle(self.screen, (0, 120, 255), (x, y), r)
 
-        # orientation = trait
+        # orientation = trait noir
         x_dir = x + int(r * math.cos(robot.orientation))
         y_dir = y - int(r * math.sin(robot.orientation))
         pygame.draw.line(self.screen, (0, 0, 0), (x, y), (x_dir, y_dir), 2)
-
-        pygame.display.flip()
 
     def tick(self, fps=60):
         self.clock.tick(fps)

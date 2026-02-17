@@ -5,6 +5,8 @@ from robot.controleur import ControleurTerminal
 from robot.vue import VueTerminalRobot
 from robot.controleur import ControleurClavierPygame
 from robot.vue import VuePygame
+from robot.environnement import Environnement
+from robot.obstacle_cercle import ObstacleCercle
 
 #TP1 : 
 """
@@ -61,32 +63,34 @@ print(robot)
 # TP 2
 
 def main():
-    robot = RobotMobile(moteur=MoteurDifferentiel())
+    robot = RobotMobile(moteur=MoteurDifferentiel(), rayon=0.25)
+
+    env = Environnement(largeur=10.0, hauteur=10.0)
+    env.ajouter_robot(robot)
+
+    # Obstacles (exemples)
+    env.ajouter_obstacle(ObstacleCercle(x=2.0, y=1.0, rayon=0.6))
+    env.ajouter_obstacle(ObstacleCercle(x=-1.5, y=-1.0, rayon=0.8))
+
     controleur = ControleurClavierPygame(v_max=2.0, omega_max=2.0)
     vue = VuePygame(largeur=800, hauteur=600, scale=50)
 
-    dt = 0.1  # 0.1s par frame (plus fluide que 1.0)
+    dt = 0.1
     running = True
 
     while running:
-        # 1) lire les commandes clavier
         cmd = controleur.lire_commande()
         if cmd is None:
             running = False
             continue
 
-        # 2) appliquer commande + update modèle
         robot.commander(**cmd)
-        robot.mettre_a_jour(dt)
+        env.mettre_a_jour(dt)              # collision gérée ici
+        vue.dessiner_environnement(env)    # on affiche le monde
+        vue.tick(60)
 
-        # 3) affichage
-        vue.dessiner_robot(robot)
-        vue.tick(fps=60)
-
-    # fermeture propre
     import pygame
     pygame.quit()
-    print("Simulation terminée.")
 
 if __name__ == "__main__":
     main()

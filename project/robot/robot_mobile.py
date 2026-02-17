@@ -2,12 +2,13 @@ import math
 
 class RobotMobile:
     _nb_robots = 0
-    def __init__(self, x=0.0, y=0.0, orientation=0.0, moteur=None):
+    def __init__(self, x=0.0, y=0.0, orientation=0.0, moteur=None , rayon = 0.25):
         self.__x = float(x)
         self.__y = float(y)
         self.__orientation = float(orientation)
         self.moteur = moteur  # objet moteur (peut être None)
         RobotMobile._nb_robots += 1
+        self.__rayon = float(rayon)
 
 
     @property
@@ -66,6 +67,14 @@ class RobotMobile:
         # Import local pour éviter dépendance circulaire
         from robot.moteur import Moteur
         return isinstance(moteur, Moteur)
+    @property
+    def rayon(self):
+        return self.__rayon
+
+    @rayon.setter
+    def rayon(self, value):
+        self.__rayon = float(value)
+
 
     def __str__(self):
         return f"RobotMobile(x={self.x:.3f}, y={self.y:.3f}, orientation={self.orientation:.3f} rad)"
