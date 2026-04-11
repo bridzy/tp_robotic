@@ -3,7 +3,7 @@
 Simulation 2D de deux robots autonomes dans un entrepôt, développée en **Python + Pygame**.  
 Robot 1 collecte des colis sur un convoyeur et les trie par couleur dans des zones de stockage. Robot 2 vide automatiquement les zones pleines vers une zone d'export.
 
-![Diagramme de classes](uml/image.png)
+![Diagramme de classes](uml/class_diag.png)
 
 ---
 

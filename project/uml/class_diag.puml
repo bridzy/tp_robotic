@@ -1,46 +1,420 @@
-@startuml
+@startuml class_diag
 skinparam classAttributeIconSize 0
-
-abstract class Moteur {
-  {abstract} +commander(**kwargs)
-  {abstract} +mettre_a_jour(robot, dt)
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  BorderColor #555555
+  ArrowColor #333333
+  FontSize 12
+}
+skinparam package {
+  BackgroundColor #F8F8FF
+  BorderColor #AAAAAA
 }
 
-class MoteurDifferentiel {
-  -v: float
-  -omega: float
-  +commander(**kwargs)
-  +mettre_a_jour(robot, dt)
+' ══════════════════════════════════════════
+'  MOTEURS
+' ══════════════════════════════════════════
+package "Moteurs" {
+
+  abstract class Moteur <<abstract>> {
+    {abstract} +commander(**kwargs)
+    {abstract} +mettre_a_jour(robot, dt)
+  }
+
+  class MoteurDifferentiel {
+    +v : float
+    +omega : float
+    --
+    +commander(**kwargs)
+    +mettre_a_jour(robot, dt)
+  }
+
+  class MoteurOmnidirectionnel {
+    +vx : float
+    +vy : float
+    +omega : float
+    --
+    +commander(**kwargs)
+    +mettre_a_jour(robot, dt)
+  }
+
+  Moteur <|-- MoteurDifferentiel
+  Moteur <|-- MoteurOmnidirectionnel
 }
 
-class MoteurOmnidirectionnel {
-  -vx: float
-  -vy: float
-  -omega: float
-  +commander(**kwargs)
-  +mettre_a_jour(robot, dt)
+' ══════════════════════════════════════════
+'  CAPTEURS
+' ══════════════════════════════════════════
+package "Capteurs" {
+
+  abstract class Capteur <<abstract>> {
+    {abstract} +read(env, robot) : dict
+    +draw(vue, robot, data)
+  }
+
+  class Lidar {
+    +n_rays : int
+    +fov : float
+    +max_range : float
+    --
+    +read(env, robot) : dict
+    +draw(vue, robot, data)
+    -{static}_ray_aabb_intersection(...) : float
+    -{static}_ray_circle_intersection(...) : float
+    -_angles() : list
+  }
+
+  Capteur <|-- Lidar
 }
 
-class RobotMobile {
-  -__x: float
-  -__y: float
-  -__orientation: float
-  +moteur: Moteur
-  {static} -_nb_robots: int
-  +x: float
-  +y: float
-  +orientation: float
-  +avancer(distance)
-  +tourner(angle)
-  +commander(**kwargs)
+' ══════════════════════════════════════════
+'  OBSTACLES
+' ══════════════════════════════════════════
+package "Obstacles" {
+
+  abstract class Obstacle <<abstract>> {
+    {abstract} +collision(position, rayon_robot) : bool
+    {abstract} +dessiner(vue)
+  }
+
+  class ObstacleRectangle {
+    +x : float
+    +y : float
+    +largeur : float
+    +hauteur : float
+    +left : float <<property>>
+    +right : float <<property>>
+    +bottom : float <<property>>
+    +top : float <<property>>
+    --
+    +collision(pos, r) : bool
+    +intersection(ox, oy, dx, dy, max_range) : float
+    +dessiner(vue)
+  }
+
+  class ObstacleCercle {
+    +x : float
+    +y : float
+    +rayon : float
+    --
+    +collision(position, rayon_robot) : bool
+    +dessiner(vue)
+  }
+
+  note bottom of ObstacleRectangle
+    N'hérite pas formellement
+    de Obstacle (duck typing)
+  end note
+
+  Obstacle <|-- ObstacleCercle
+}
+
+' ══════════════════════════════════════════
+'  CONTROLEURS
+' ══════════════════════════════════════════
+package "Contrôleurs" {
+
+  abstract class Controleur <<abstract>> {
+    {abstract} +lire_commande() : dict
+  }
+
+  class ControleurTerminal {
+    +lire_commande() : dict
+  }
+
+  class ControleurClavierPygame {
+    +v_max : float
+    +omega_max : float
+    --
+    +lire_commande() : dict
+  }
+
+  class ControleurAuto {
+    +lidar : Lidar
+    +target : tuple
+    +v_max : float
+    +v_min : float
+    +omega_max : float
+    +alpha_v : float
+    +alpha_w : float
+    +front_slow : float
+    +front_avoid : float
+    +front_danger : float
+    +front_backup : float
+    +side_near : float
+    +k_goal : float
+    +k_avoid : float
+    -_stuck_timer : float
+    -_stuck_threshold : float
+    -_min_displacement : float
+    -_in_backup : bool
+    -_backup_timer : float
+    -_in_escape : bool
+    -_escape_timer : float
+    -_escape_dir : float
+    --
+    +set_target(x, y)
+    +update(robot, env, dt) : dict
+    -{static}_clamp(x, lo, hi) : float
+    -{static}_wrap_pi(a) : float
+  }
+
+  Controleur <|-- ControleurTerminal
+  Controleur <|-- ControleurClavierPygame
+}
+
+' ══════════════════════════════════════════
+'  DOMAINE MÉTIER
+' ══════════════════════════════════════════
+package "Domaine" {
+
+  class Colis {
+    +x : float
+    +y : float
+    +couleur : str
+    +etat : str
+    {static}+WAITING  = "WAITING"
+    {static}+CARRIED  = "CARRIED"
+    {static}+DELIVERED = "DELIVERED"
+    --
+    +set_position(x, y)
+    +__repr__() : str
+  }
+
+  class Zone {
+    +name : str
+    +x : float
+    +y : float
+    +largeur : float
+    +hauteur : float
+    +color : tuple
+    +capacity : int
+    +count : int
+    --
+    +is_full() : bool
+    +add_colis() : bool
+    +vider() : int
+    +dessiner(vue)
+  }
+
+  class Batterie {
+    +niveau : float
+    --
+    +consommer(quantite)
+    +charger(dt) : bool
+    +needs_charge() : bool
+    +is_full() : bool
+    +pct() : int
+    +color() : tuple
+  }
+
+  class FileAttenteColis {
+    +center_x : float
+    +center_y : float
+    +width : float
+    +height : float
+    +max_size : int
+    +spacing : float
+    +spawn_min_s : float
+    +spawn_max_s : float
+    +colis : list[Colis]
+    -_warmup_remaining : int
+    -_warmup_delay : float
+    -_in_warmup : bool
+    --
+    +rect_world : tuple <<property>>
+    +pickup_point() : tuple
+    +has_waiting() : bool
+    +count() : int
+    +update(dt)
+    +try_pick_first(rx, ry, pick_radius) : Colis
+    +time_until_next() : float
+  }
+
+  FileAttenteColis "1" *-- "0..*" Colis : gère >
+}
+
+' ══════════════════════════════════════════
+'  ROBOTS
+' ══════════════════════════════════════════
+package "Robots" {
+
+  class RobotMobile {
+    -__x : float
+    -__y : float
+    -__orientation : float
+    -__rayon : float
+    +moteur : Moteur
+    -{static}_nb_robots : int
+    --
+    +x : float <<property>>
+    +y : float <<property>>
+    +orientation : float <<property>>
+    +rayon : float <<property>>
+    +avancer(distance)
+    +tourner(angle)
+    +commander(**kwargs)
+    +mettre_a_jour(dt)
+    +{static}moteur_valide(moteur) : bool
+    +{classifier}nombre_robots() : int
+    +__str__() : str
+  }
+
+  class Robot2 {
+    +export_zone : Zone
+    +robot : RobotMobile
+    +lidar : Lidar
+    +controleur : ControleurAuto
+    +state : str
+    +target_zone : Zone
+    +carry : int
+    +total_exported : int
+    -_queue : deque
+    -_in_queue : set
+    --
+    +x : float <<property>>
+    +y : float <<property>>
+    +orientation : float <<property>>
+    +is_idle : bool <<property>>
+    +request_empty(zone)
+    +update(dt, robot1)
+    +__repr__() : str
+  }
+
+  note right of Robot2
+    FSM : IDLE → GO_ZONE
+          → PICK → GO_EXPORT
+          → DROP → IDLE
+  end note
+
+  RobotMobile "1" *-- "1" Moteur : moteur >
+  Robot2 "1" *-- "1" RobotMobile : robot >
+  Robot2 "1" *-- "1" Lidar      : lidar >
+  Robot2 "1" *-- "1" ControleurAuto : controleur >
+  Robot2 "1" --> "1" Zone : export_zone
+  Robot2 "0..1" --> "1" Zone : target_zone
+}
+
+' ══════════════════════════════════════════
+'  ENVIRONNEMENT
+' ══════════════════════════════════════════
+class Environnement {
+  +largeur : float
+  +hauteur : float
+  +robot : RobotMobile
+  +obstacles : list
+  +zones : list
+  +file_attente : FileAttenteColis
+  +colis_transporte : Colis
+  +nb_livres : int
+  +home : tuple
+  +lidar_sensor : Lidar
+  +autres_robots : list
+  +paused : bool
+  +robot2 : Robot2
+  +batterie : Batterie
+  #_r1_state : str
+  #_r1_vitesse : float
+  --
+  +ajouter_robot(robot)
+  +ajouter_obstacle(obstacle)
+  +ajouter_zone(zone)
   +mettre_a_jour(dt)
-  {static} +moteur_valide(moteur): bool
-  {static} +nombre_robots(): int
-  +__str__(): str
 }
 
-Moteur <|-- MoteurDifferentiel
-Moteur <|-- MoteurOmnidirectionnel
+note right of Environnement
+  FSM Robot 1 :
+  R1_WORKING ↔ R1_CHARGING
+  (≤25% batt. → CHARGING,
+   100% → WORKING)
+end note
 
-RobotMobile o-- Moteur : moteur
+' ══════════════════════════════════════════
+'  VUE
+' ══════════════════════════════════════════
+class VuePygame {
+  +largeur : int
+  +hauteur : int
+  +scale : float
+  +show_lidar : bool
+  +font : Font
+  +font_small : Font
+  --
+  +convertir_coordonnees(x, y) : tuple
+  +rect_m_to_rect_px(x, y, w, h) : Rect
+  +set_zone(largeur_m, hauteur_m)
+  +dessiner_environnement(env)
+  +dessiner_robot(robot)
+  +dessiner_robot2(robot2)
+  +dessiner_hud(env)
+  +tick(fps)
+}
+
+' ══════════════════════════════════════════
+'  PLANIFICATION (non intégré)
+' ══════════════════════════════════════════
+package "Planification (non intégré)" #EEEEEE {
+
+  class GridPlannerAStar {
+    +width_m : float
+    +height_m : float
+    +resolution : float
+    +robot_radius : float
+    +safety_margin : float
+    +nx : int
+    +ny : int
+    +grid : list
+    --
+    +build_from_environment(env)
+    +astar(start_xy, goal_xy) : list
+    +simplify_path(path) : list
+    +world_to_grid(x, y) : tuple
+    +grid_to_world(i, j) : tuple
+    +line_of_sight(a, b) : bool
+  }
+
+  class PathFollower {
+    +seuil : float
+    +waypoints : list
+    +i : int
+    -_finished : bool
+    --
+    +set_path(waypoints)
+    +has_path() : bool
+    +finished() : bool
+    +current_target() : tuple
+    +update(robot)
+  }
+}
+
+' ══════════════════════════════════════════
+'  RELATIONS ENVIRONNEMENT
+' ══════════════════════════════════════════
+Environnement "1" *-- "1"    RobotMobile      : robot >
+Environnement "1" *-- "1"    FileAttenteColis  : file_attente >
+Environnement "1" *-- "1"    Lidar             : lidar_sensor >
+Environnement "1" *-- "1"    Batterie          : batterie >
+Environnement "1" o-- "0..1" Colis             : colis_transporte
+Environnement "1" o-- "0..*" Obstacle          : obstacles
+Environnement "1" o-- "0..*" Zone              : zones
+Environnement "1" o-- "1"    Robot2            : robot2
+
+' ══════════════════════════════════════════
+'  RELATIONS CONTROLEUR AUTO
+' ══════════════════════════════════════════
+ControleurAuto --> Lidar : utilise >
+
+' ══════════════════════════════════════════
+'  RELATIONS VUE
+' ══════════════════════════════════════════
+VuePygame ..> Environnement : dessine >
+
+' ══════════════════════════════════════════
+'  RELATIONS PLANIFICATION
+' ══════════════════════════════════════════
+GridPlannerAStar ..> Environnement : build_from >
+PathFollower      ..> RobotMobile  : update >
+
 @enduml
